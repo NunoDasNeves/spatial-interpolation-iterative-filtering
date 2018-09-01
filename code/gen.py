@@ -97,28 +97,31 @@ def gen_sensor_data(T, D, N, func): # other params: moving, collaborating, densi
         D: number of spatial dimensions
         sensor_variances: Array of N sensors' variances
         func: function to generate data. f(t, p) that returns true value at time t at position p
+        static: sensors d
         Creates N 'sensors' distributed randomly across a 100x100x..x100 hypercube centred at the origin
         For T discrete timesteps, simulate the capture of data by these sensors using their variances
         Generate a TxN table of each sensor's data at timestep t for all 0<t<T
         Each sensor reading is also associated with a location
     '''
-    # TODO currently assuming D = 1
+    # TODO currently assuming D <= 1
     # we assume variances don't change in time/space
     sensor_variances = uniform(1, 5, N)
 
     # positions for N sensors across T timesteps (T*N vector)
-    # sensors all in the same spot
-    #sensor_positions = np.zeros((T,N,1))
-    # static but distributed sensors
-    poses = _CUBE_SIZE*2*rand(N) - _CUBE_SIZE
-    sensor_positions = [[[poses[j]] for j in range(N)] for i in range(T)]
+    if D == 0:
+        # sensors all in the same spot
+        sensor_positions = np.zeros((T,N,1))
+    else:
+        # static but distributed sensors
+        poses = _CUBE_SIZE*2*rand(N) - _CUBE_SIZE
+        sensor_positions = [[[poses[j]] for j in range(N)] for i in range(T)]
 
     sensor_data = np.array([[normal(func(i, T, sensor_positions[i][j]), sensor_variances[j]) for j in range(N)] for i in range(T)])
-    return sensor_positions, sensor_data
+    return sensor_positions, sensor_variances, sensor_data
 
 def main():
     #plot_func(10, moving_gaussian)
-    sensor_pos, sensor_data = gen_sensor_data(24, 1, 10, moving_gaussian)
+    sensor_pos, sensor_vars, sensor_data = gen_sensor_data(24, 1, 10, moving_gaussian)
     plot_observations(24, moving_gaussian, sensor_pos, sensor_data)
 
 if __name__ == '__main__':
