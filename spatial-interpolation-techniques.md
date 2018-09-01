@@ -1,5 +1,5 @@
 
-Aus weather uses variant of Barnes Interpolation and splines for rainfall
+Aus weather uses variant of Barnes Interpolation for temperature and splines for rainfall
 
 Deterministic Interpolation
 - Global: Polynomial

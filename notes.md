@@ -1,9 +1,9 @@
-###Goal
+### Goal
 Combine spatial interpolation weighting techniques (e.g. Barnes) with iterative filtering to defeat noisy, broken or collaborating observers.
 
 The claim is that by robustly estimating the variance of the sensors and using these as weights with a spatial interpolation algorithm will improve the accuracy of such an algorithm.
 
-###Notes
+### Notes
 
 It can be viewed similarly to a Machine Learning problem:
 - We have a set of data points, each has a feature vector containing:
@@ -29,7 +29,7 @@ Also:
 - We may want to know about the certainty of an estimate: e.g. Kriging techniques
 - Existing spatial interpolation methods do often account for error/overfitting, but don't seem to account for past observations (in determining accuracy)
 
-###Milestones
+### Milestones
 
 1. [x] Create groundwork for estimation, data generation etc.
 2. [ ] Disregarding the spatial aspect, implement UNSW IF algo and maximum likelihood estimate (MLE)
@@ -42,7 +42,7 @@ Also:
 (4) and (5) if possible, proves the claim that variance weighting may improve spatial interpolation techniques.
 (6), if possible, will be a practical method for achieving good variance estimates
 
-###Predictions
+### Predictions
 - This _should_ work...it's really a matter of weighting the variance prediction algorithm by distance, and applying the variances to the interpolation estimates
 - This may only work when there are lots of sensors grouped in the same area
 
