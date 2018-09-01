@@ -31,16 +31,16 @@ Also:
 
 ###Milestones
 
-1. Create groundwork for estimation, data generation etc.
-2. Disregarding the spatial aspect, implement UNSW IF algo and maximum likelihood estimate (MLE)
-3. Set up spatial interpolation algorithm and implement Barnes Filtering or similar
-4. Apply variance weighting to Barnes filtering algorithm
-5. Apply Maximum Likelihood Estimate to Barnes filtering and compare with regular Barnes filtering
-6. Apply modified UNSW IF algorithm for estimating variances
+1. [x] Create groundwork for estimation, data generation etc.
+2. [ ] Disregarding the spatial aspect, implement UNSW IF algo and maximum likelihood estimate (MLE)
+3. [ ] Set up spatial interpolation algorithm and implement Barnes Filtering or another algorithm
+4. [ ] Apply variance weighting to interpolation algorithm
+5. [ ] Apply Maximum Likelihood Estimate to interpolation algorithm and compare with regular version
+6. [ ] Apply modified UNSW IF algorithm for estimating variances
 
-(1) and (2) are necessary groundwork.
-(3) and (4), if successful, prove the claim that variance weighting may improve spatial interpolation techniques.
-(5), if possible, will be a practical method for achieving good variance estimates
+(1), (2) and (3) are necessary groundwork.
+(4) and (5) if possible, proves the claim that variance weighting may improve spatial interpolation techniques.
+(6), if possible, will be a practical method for achieving good variance estimates
 
 ###Predictions
 - This _should_ work...it's really a matter of weighting the variance prediction algorithm by distance, and applying the variances to the interpolation estimates
