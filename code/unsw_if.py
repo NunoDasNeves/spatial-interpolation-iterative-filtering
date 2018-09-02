@@ -39,7 +39,7 @@ def predict_unsw(sensor_data, v):
         likelihoods = np.array([
             np.power(np.product([
                     np.exp(
-                        ((-1/(T*2*variances[k]))*np.sum([(sensor_data[t][j] - (sensor_data[t][k] if v == 1 else estimate[t]))**2 for t in range(T)]))
+                        ((-1/(T*2*variances[k]))*np.sum([(sensor_data[t][j] - (sensor_data[t][k] if v==1 else estimate[t]))**2 for t in range(T)]))
                         )/np.sqrt(2*np.pi*variances[k])
                 for k in range(N)]), 1/N)
             for j in range(N)])
@@ -89,7 +89,7 @@ def main():
     rms_error = np.sqrt(sum([(mle_estimate[i] - moving_gaussian(i, T, [0]))**2 for i in range(T)]))
     print("mle error:",rms_error)
 
-    # now, UNSW iterative filtering TODO
+    # now, UNSW iterative filtering
     unsw_v1_estimate = predict_unsw_v1(sensor_data)
     rms_error = np.sqrt(sum([(unsw_v1_estimate[i] - moving_gaussian(i, T, [0]))**2 for i in range(T)]))
     print ("unsw algorithm v1 error:",rms_error)
