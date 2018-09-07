@@ -2,10 +2,11 @@ import numpy as np
 from gen import gen_sensor_data, moving_gaussian, plot_interp_over_time, CUBE_SIZE
 
 
-def barnes_interp(sensor_readings, sensor_pos, R=1.0, D=1, d_x=0.3, gamma=0.2):
+def barnes_interp(sensor_readings, sensor_pos, sensor_vars=None, R=1.0, D=1, d_x=0.3, gamma=0.2):
     '''
         sensor_readings: readings from N sensors
         sensor_pos: vector positions of N sensors
+        sensor_vars: non-zero sensor variances, or None if all zero
         R: max distance sensors to consider
         D: number of spatial dimensions
         d_x: spacing
@@ -13,8 +14,10 @@ def barnes_interp(sensor_readings, sensor_pos, R=1.0, D=1, d_x=0.3, gamma=0.2):
         Predict true value at all points within hypercube using Barnes interpolation
     '''
     # TODO everything assumes D = 1 right now!
-
     N = len(sensor_readings)
+
+    if sensor_vars is None:
+        sensor_vars = [1.0]*N
 
     # area being predicted over
     area = CUBE_SIZE**D
@@ -43,10 +46,11 @@ def barnes_interp(sensor_readings, sensor_pos, R=1.0, D=1, d_x=0.3, gamma=0.2):
         # TODO this only works if there are sensors within R of p!
         #sensor_readings, sensor_dist = zip(*[(val, d) for val,d in zip(sensor_readings, sensor_dist) if d < R])
 
-        weights = np.array([np.exp(-d**2/K) for d in sensor_dist])
+        weights = np.array([np.exp(-(d**2)/K)/v for d,v in zip(sensor_dist, sensor_vars)])
         weights_sum = np.sum(weights)
         grid_estimates.append(np.sum([w*m for w,m in zip(weights, sensor_readings)])/weights_sum)
         closest_sensor_lists.append(list(zip(sensor_readings, sensor_dist, sensor_pos)))
+
 
     # map of positions to estimates for convenience
     grid_map = {pos:val for pos,val in zip(grid_positions, grid_estimates)}
@@ -74,7 +78,8 @@ def barnes_interp(sensor_readings, sensor_pos, R=1.0, D=1, d_x=0.3, gamma=0.2):
 
     for k in range(len(grid_positions)):
         # note these weights have a gamma
-        weights = np.array([np.exp(-(d)**2/(gamma*K)) for _,d,p in closest_sensor_lists[k]])
+        # TODO be careful, when this is changed so that closest_sensor_lists doesn't have all sensors, this will break
+        weights = np.array([np.exp(-(d)**2/(gamma*K))/v for _,d,p,v in zip(*zip(*closest_sensor_lists[k]), sensor_vars)])
         # for this grid position, sum up weights to use in denominator
         weights_sum = np.sum(weights)
         # add to the estimate a weighted difference between estimates and actual sensor values
@@ -92,15 +97,33 @@ def main():
 
     d_x = 0.3
     grid_positions = np.array([p for p in np.arange(-CUBE_SIZE, CUBE_SIZE, d_x)])
+
     estimates = []
+    rms_error_avg = 0
     for t in range(T):
         est = barnes_interp(sensor_data[t], sensor_pos[t], d_x=d_x)
         # TODO precision, recall etc
-        #rms_error = np.sqrt(sum([(est[i] - moving_gaussian(t, T, (grid_positions[i],)))**2 for i in range(len(grid_positions))]))
-        #print("barnes rms error at time {}: {}".format(t,rms_error))
+        rms_error_avg += np.sqrt(sum([(est[i] - moving_gaussian(t, T, (grid_positions[i],)))**2 for i in range(len(grid_positions))]))
         estimates.append(est)
 
+    rms_error_avg /= T
+    print("without variance weighting - avg rms error: {}".format(rms_error_avg))
+
     plot_interp_over_time(T, moving_gaussian, sensor_pos, sensor_data, estimates, grid_positions)
+
+    estimates = []
+    rms_error_avg = 0
+    for t in range(T):
+        est = barnes_interp(sensor_data[t], sensor_pos[t], sensor_vars, d_x=d_x)
+        # TODO precision, recall etc
+        rms_error_avg += np.sqrt(sum([(est[i] - moving_gaussian(t, T, (grid_positions[i],)))**2 for i in range(len(grid_positions))]))
+        estimates.append(est)
+
+    rms_error_avg /= T
+    print("with variance weighting - avg rms error: {}".format(rms_error_avg))
+
+    plot_interp_over_time(T, moving_gaussian, sensor_pos, sensor_data, estimates, grid_positions)
+
 
 
 if __name__=='__main__':

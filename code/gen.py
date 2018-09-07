@@ -143,13 +143,21 @@ def moving_gaussian(t, T, p):
 
     return 200*multivariate_normal.pdf(p, mean=mu, cov=covariance)
 
-def gen_sensor_data(T, D, N, func): # other params: moving, collaborating, density function...
+def gen_sensor_data(T, D, N, func, distr_movement='static', distr_type='even', distr_variance=0.3): # other params: moving, collaborating, density function...
     '''
         T: number of timesteps
         D: number of spatial dimensions
         sensor_variances: Array of N sensors' variances
         func: function to generate data. f(t, p) that returns true value at time t at position p
         static: sensors d
+        distr_movement: move each timestep
+            - 'static' = no movement
+            - 'random' = jump to a random point accordint to distr_type each timestep
+            - 'moving' = move a random amount in a random direction each timestep
+        distr_type: pattern of sensor distribution
+            - 'even' = even intervals across space with some variance
+            - 'random' = completely random. if moving,
+        distr_variance: variance parameter for even spacing randomness
         Creates N 'sensors' distributed randomly across a hypercube centred at the origin
         For T discrete timesteps, simulate the capture of data by these sensors using their variances
         Generate a TxN table of each sensor's data at timestep t for all 0<t<T
@@ -157,16 +165,24 @@ def gen_sensor_data(T, D, N, func): # other params: moving, collaborating, densi
     '''
     # TODO currently assuming D <= 1
     # we assume variances don't change in time/space
-    sensor_variances = uniform(1, 5, N)
+    sensor_variances = uniform(0.5, 5, N)
 
     # positions for N sensors across T timesteps (T*N vector)
     if D == 0:
         # sensors all in the same spot
         sensor_positions = np.zeros((T,N,1))
     else:
-        # static but distributed sensors
-        poses = CUBE_SIZE*2*rand(N) - CUBE_SIZE
-        sensor_positions = [[[poses[j]] for j in range(N)] for i in range(T)]
+        if distr_movement == 'static':
+            if distr_type == 'random':
+                poses = uniform(-CUBE_SIZE, CUBE_SIZE, N)
+            elif distr_type == 'even':
+                poses = np.array([normal(p, distr_variance) for p in np.arange(-CUBE_SIZE, CUBE_SIZE, (CUBE_SIZE*2)/N)])
+                print(poses)
+            else:
+                raise("Not implemented")
+            sensor_positions = [[[poses[j]] for j in range(N)] for i in range(T)]
+        else:
+            raise("Not implemented")
 
     sensor_data = np.array([[normal(func(i, T, sensor_positions[i][j]), sensor_variances[j]) for j in range(N)] for i in range(T)])
     return sensor_positions, sensor_variances, sensor_data
