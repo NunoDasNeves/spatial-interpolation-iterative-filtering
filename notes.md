@@ -32,9 +32,9 @@ Also:
 ### Milestones
 
 1. [x] Create groundwork for estimation, data generation etc.
-2. [ ] Disregarding the spatial aspect, implement UNSW IF algo and maximum likelihood estimate (MLE)
-3. [ ] Set up spatial interpolation algorithm and implement Barnes Filtering or another algorithm
-4. [ ] Apply variance weighting to interpolation algorithm
+2. [x] Disregarding the spatial aspect, implement UNSW IF algo and maximum likelihood estimate (MLE)
+3. [x] Set up spatial interpolation algorithm and implement Barnes Filtering or another algorithm
+4. [x] Apply variance weighting to interpolation algorithm
 5. [ ] Apply Maximum Likelihood Estimate to interpolation algorithm and compare with regular version
 6. [ ] Apply modified UNSW IF algorithm for estimating variances
 
