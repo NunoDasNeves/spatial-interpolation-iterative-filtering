@@ -8,7 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as anim
 
 
-_CUBE_SIZE=10
+CUBE_SIZE=10
 
 
 def plot_func(T, func):
@@ -17,7 +17,7 @@ def plot_func(T, func):
     '''
     # positions in 2 axis of points to plot on
     # TODO right now this -1 +1 business is a hack to get contour() to plot everything
-    x, y = np.mgrid[-1:T+1:1, -_CUBE_SIZE:CUBE_SIZE:0.1]
+    x, y = np.mgrid[-1:T+1:1, -CUBE_SIZE:CUBE_SIZE:0.1]
 
     z = np.array([func(t,T,[i]) for t,i in zip(np.ravel(x), np.ravel(y))])
     # Reshape back to a grid.
@@ -32,10 +32,7 @@ def plot_func(T, func):
 
     plt.show()
 
-def plot_observations(T, func, sensor_pos, sensor_data):
-    '''
-        Assuming 1 dimension, plot func vs sensor data
-    '''
+def _plot_function(ax, T, func, color):
     # positions in 2 axis of points to plot on
     x, y = np.mgrid[-1:T+1:1, -10.0:10.0:0.1]
 
@@ -43,11 +40,11 @@ def plot_observations(T, func, sensor_pos, sensor_data):
     # Reshape back to a grid.
     z = z.reshape(x.shape)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    ax.contour(x,y,z, zdir='x', colors=[color], levels=range(T))
 
-    ax.contour(x,y,z, zdir='x', colors=['orange','red','purple','blue','green'], levels=range(T))
+    return ax
 
+def _plot_observations(ax, T, sensor_pos, sensor_data):
     # position in time
     sensor_x = []
     # position in space
@@ -61,10 +58,65 @@ def plot_observations(T, func, sensor_pos, sensor_data):
             sensor_y.append(sensor_pos[i][j])
             sensor_z.append(sensor_data[i][j])
 
-    ax.scatter(sensor_x, sensor_y, sensor_z)
+    ax.scatter(sensor_x, sensor_y, sensor_z, c='b')
+
+    return ax
+
+def plot_observations(T, func, sensor_pos, sensor_data):
+    '''
+        Assuming 1 dimension, plot func vs sensor data
+    '''
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax = _plot_function(ax, T, func, 'green')
+    _plot_observations(ax, T, sensor_pos, sensor_data)
 
     plt.show()
 
+def plot_interp_over_time(T, func, sensor_pos, sensor_data, estimates, grid_positions):
+    '''
+        Assuming 1 dimension, plot func
+        Then plot estimates at each grid position on top
+    '''
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax = _plot_function(ax, T, func, 'green')
+    ax = _plot_observations(ax, T, sensor_pos, sensor_data)
+
+    # contours for interpolation estimates instead of points
+    '''
+    grid_map = {t:{grid_positions[i]:estimates[t][i] for i in range(len(grid_positions))} for t in range(T)}
+
+    # positions in 2 axis of points to plot on
+    x = np.array([[t]*len(grid_positions) for t in range(T)])
+    y = np.array([[a for a in grid_positions] for i in range(T)])
+
+    z = np.array([grid_map[t][i] for t,i in zip(np.ravel(x), np.ravel(y))])
+    # Reshape back to a grid.
+    z = z.reshape(x.shape)
+
+    ax.contour(x,y,z, zdir='x', colors=['red'], levels=range(T))
+    '''
+
+    # position in time
+    est_x = []
+    # position in space
+    est_y = []
+    # estimate
+    est_z = []
+    # we need T*N data points
+    for i in range(T):
+        for j in range(len(grid_positions)):
+            est_x.append(i)
+            est_y.append(grid_positions[j])
+            est_z.append(estimates[i][j])
+
+    ax.scatter(est_x, est_y, est_z, c='r')
+
+    plt.show()
 
 
 def moving_gaussian(t, T, p):
@@ -73,18 +125,18 @@ def moving_gaussian(t, T, p):
         T: number of timesteps
         D: number of spatial dimensions (can be 0)
         Generates a D dimensional moving gaussian function, that moves through the space over T discrete timesteps
-        The space it moves through is always a 10x10x..x10 hypercube centered at the origin
+        The space it moves through is always a hypercube centered at the origin
         Returns a function f(t, p)
         f(t,p) returns a value at time t < timesteps at position p where p is d-dimensional a row vector
     '''
     # TODO use D
     # atm assuming D = 1
     # first dimension of the distribution is time
-    pos = 2*_CUBE_SIZE*(t/T) - _CUBE_SIZE
+    pos = 2*CUBE_SIZE*(t/T) - CUBE_SIZE
     # mean
     mu = np.array([pos])
     # stddev
-    sigma = np.array([_CUBE_SIZE/4])
+    sigma = np.array([CUBE_SIZE/4])
     # covariance matrix
     covariance = np.diag(sigma**2)
     # points sampled from the normal distribution
@@ -98,7 +150,7 @@ def gen_sensor_data(T, D, N, func): # other params: moving, collaborating, densi
         sensor_variances: Array of N sensors' variances
         func: function to generate data. f(t, p) that returns true value at time t at position p
         static: sensors d
-        Creates N 'sensors' distributed randomly across a 100x100x..x100 hypercube centred at the origin
+        Creates N 'sensors' distributed randomly across a hypercube centred at the origin
         For T discrete timesteps, simulate the capture of data by these sensors using their variances
         Generate a TxN table of each sensor's data at timestep t for all 0<t<T
         Each sensor reading is also associated with a location
@@ -113,7 +165,7 @@ def gen_sensor_data(T, D, N, func): # other params: moving, collaborating, densi
         sensor_positions = np.zeros((T,N,1))
     else:
         # static but distributed sensors
-        poses = _CUBE_SIZE*2*rand(N) - _CUBE_SIZE
+        poses = CUBE_SIZE*2*rand(N) - CUBE_SIZE
         sensor_positions = [[[poses[j]] for j in range(N)] for i in range(T)]
 
     sensor_data = np.array([[normal(func(i, T, sensor_positions[i][j]), sensor_variances[j]) for j in range(N)] for i in range(T)])
